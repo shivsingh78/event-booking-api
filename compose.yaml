@@ -1,0 +1,26 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: event-booking-postgres
+    environment:
+      POSTGRES_USER: event_booking
+      POSTGRES_PASSWORD: event_booking_123
+      POSTGRES_DB: event_booking
+    ports:
+      - "5432:5432"
+    volumes:
+      - event_booking_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U event_booking -d event_booking"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: event-booking-redis
+    ports:
+      - "6379:6379"
+
+volumes:
+  event_booking_pgdata:
