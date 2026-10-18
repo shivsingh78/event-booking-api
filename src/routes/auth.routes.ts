@@ -4,8 +4,10 @@ import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { pool } from "../db/pool.js";
 import { env } from "../config/env.js";
+import { authRateLimiter } from "../middleware/rateLimit.js";
 
 const router = Router();
+router.use(authRateLimiter);
 
 const credentialsSchema = z.object({
   email: z.string().trim().email().max(254),
@@ -19,9 +21,9 @@ type User = {
   role: "customer" | "organizer";
 };
 
-function createToken(user: Pick<User, "id" | "role">) {
+export function createToken(user: Pick<User, "id" | "email" | "role">) {
   return jwt.sign(
-    { role: user.role },
+    { role: user.role, email: user.email },
     env.JWT_SECRET,
     {
       subject: user.id,

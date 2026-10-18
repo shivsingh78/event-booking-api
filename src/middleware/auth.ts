@@ -22,7 +22,7 @@ export const authenticate: RequestHandler = (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, env.JWT_SECRET);
+    const decoded = jwt.verify(token, env.JWT_SECRET) as jwt.JwtPayload;
 
     if (
       typeof decoded === "string" ||
@@ -36,6 +36,7 @@ export const authenticate: RequestHandler = (req, res, next) => {
 
     req.auth = {
       userId: decoded.sub,
+      email: decoded.email,
       role: decoded.role as Role,
     };
 

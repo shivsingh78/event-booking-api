@@ -1,0 +1,40 @@
+
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/ 
+
+     execution: local
+        script: bookings-contention.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 50 max VUs, 1m0s max duration (incl. graceful stop):
+              * contention_surge: 200 iterations shared among 50 VUs (maxDuration: 30s, gracefulStop: 30s)
+
+
+     ✓ status is 201 or 409 (graceful)
+     ✓ no 500 error
+
+     checks...........................: 100.00% 400 out of 400
+     contention_latency_ms............: avg=141.78   min=10      med=38       max=612      p(90)=431.3    p(95)=563.05  
+     contention_sold_out_409..........: 150     244.960566/s
+     contention_successful_bookings...: 50      81.653522/s
+     data_received....................: 236 kB  385 kB/s
+     data_sent........................: 111 kB  182 kB/s
+     http_req_blocked.................: avg=528.84µs min=1.25µs  med=4.15µs   max=4.31ms   p(90)=2.2ms    p(95)=3.13ms  
+     http_req_connecting..............: avg=470.56µs min=0s      med=0s       max=4.25ms   p(90)=2.02ms   p(95)=2.41ms  
+     http_req_duration................: avg=141.1ms  min=9.33ms  med=38.01ms  max=609.55ms p(90)=430.98ms p(95)=562.95ms
+       { expected_response:true }.....: avg=135.69ms min=9.33ms  med=120.98ms max=348.84ms p(90)=274.68ms p(95)=312.65ms
+     http_req_failed..................: 75.00%  150 out of 200
+     http_req_receiving...............: avg=102.58µs min=26.02µs med=87.31µs  max=581.12µs p(90)=169.29µs p(95)=201.93µs
+     http_req_sending.................: avg=104.08µs min=6.05µs  med=23.66µs  max=1.63ms   p(90)=235.68µs p(95)=528.48µs
+     http_req_tls_handshaking.........: avg=0s       min=0s      med=0s       max=0s       p(90)=0s       p(95)=0s      
+     http_req_waiting.................: avg=140.9ms  min=9.2ms   med=37.86ms  max=609.44ms p(90)=430.91ms p(95)=562.75ms
+     http_reqs........................: 200     326.614088/s
+     iteration_duration...............: avg=141.86ms min=9.54ms  med=38.2ms   max=612.03ms p(90)=431.37ms p(95)=563.24ms
+     iterations.......................: 200     326.614088/s
+
+
+running (0m00.6s), 00/50 VUs, 200 complete and 0 interrupted iterations
+contention_surge ✓ [ 100% ] 50 VUs  00.6s/30s  200/200 shared iters
