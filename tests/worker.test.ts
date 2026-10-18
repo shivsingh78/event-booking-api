@@ -3,6 +3,29 @@ import { pool } from "../src/db/pool.js";
 import { notificationQueue } from "../src/jobs/queue.js";
 import { sendBookingConfirmationEmail, sendEventUpdateEmail } from "../src/jobs/emailService.js";
 
+import { beforeEach, vi } from "vitest";
+
+const { resendSendMock } = vi.hoisted(() => ({
+  resendSendMock: vi.fn(),
+}));
+
+vi.mock("resend", () => ({
+  Resend: class {
+    emails = {
+      send: resendSendMock,
+    };
+  },
+}));
+
+beforeEach(() => {
+  resendSendMock.mockReset();
+
+  resendSendMock.mockResolvedValue({
+    data: { id: "test-email-id" },
+    error: null,
+  });
+});
+
 describe("Background Email & Worker Processing", () => {
   it("sendBookingConfirmationEmail handles parameters correctly", async () => {
     const result = await sendBookingConfirmationEmail({
