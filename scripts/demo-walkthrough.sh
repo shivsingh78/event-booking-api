@@ -1,7 +1,13 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
-BASE_URL="http://localhost:3000"
+# Pass BASE_URL=https://your-service.onrender.com to run this against Render.
+BASE_URL="${BASE_URL:-http://localhost:3000}"
+BASE_URL="${BASE_URL%/}"
+# Resend's controlled delivery test recipient keeps a live demo from targeting
+# example.com. Override it with a unique inbox you control when appropriate.
+DEMO_CUSTOMER_EMAIL="${DEMO_CUSTOMER_EMAIL:-delivered@resend.dev}"
+
 echo "=== 1. Health & Readiness Check ==="
 curl -s "$BASE_URL/health" | jq .
 curl -s "$BASE_URL/ready" | jq .
@@ -9,12 +15,16 @@ echo ""
 
 echo "=== 2. Register Customer ==="
 TIMESTAMP=$(date +%s)
-CUST_EMAIL="demo_customer_${TIMESTAMP}@example.com"
+CUST_EMAIL="$DEMO_CUSTOMER_EMAIL"
 REG_RES=$(curl -s -X POST "$BASE_URL/api/auth/register" \
   -H "Content-Type: application/json" \
   -d "{\"email\":\"$CUST_EMAIL\",\"password\":\"DemoPassword123!\"}")
 echo "$REG_RES" | jq .
 CUST_TOKEN=$(echo "$REG_RES" | jq -r .accessToken)
+if [[ -z "$CUST_TOKEN" || "$CUST_TOKEN" == "null" ]]; then
+  echo "Customer registration failed. Set DEMO_CUSTOMER_EMAIL to a fresh controlled inbox and try again." >&2
+  exit 1
+fi
 echo ""
 
 echo "=== 3. Organizer Login & Create Event ==="

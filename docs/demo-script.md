@@ -21,6 +21,15 @@
   1. `README.md` (architecture diagram & data model).
   2. `docs/performance.md` (before-and-after comparison table).
   3. Resend Dashboard / test inbox (or worker logs showing email events).
+- [ ] For a hosted demo, run the executable walkthrough with the deployed URL.
+  `delivered@resend.dev` is Resend's controlled delivery-test recipient; set
+  `DEMO_CUSTOMER_EMAIL` to a unique inbox you control if you need to inspect
+  the message yourself:
+  ```bash
+  BASE_URL=https://your-service.onrender.com \
+  DEMO_CUSTOMER_EMAIL=delivered@resend.dev \
+  bash scripts/demo-walkthrough.sh
+  ```
 
 ---
 
@@ -41,18 +50,23 @@
 
 **Commands to run**:
 ```bash
+# Set BASE_URL=https://your-service.onrender.com for a deployed API.
+BASE_URL="${BASE_URL:-http://localhost:3000}"
+BASE_URL="${BASE_URL%/}"
+CUST_EMAIL="${DEMO_CUSTOMER_EMAIL:-delivered@resend.dev}"
+
 # 1. Register customer
-curl -X POST http://localhost:3000/api/auth/register \
+curl -X POST "$BASE_URL/api/auth/register" \
   -H "Content-Type: application/json" \
-  -d '{"email":"demo_customer@example.com","password":"DemoPassword123!"}'
+  -d "{\"email\":\"$CUST_EMAIL\",\"password\":\"DemoPassword123!\"}"
 
 # 2. Login as organizer and save token
-ORG_TOKEN=$(curl -s -X POST http://localhost:3000/api/auth/login \
+ORG_TOKEN=$(curl -s -X POST "$BASE_URL/api/auth/login" \
   -H "Content-Type: application/json" \
   -d '{"email":"bench_organizer@example.com","password":"BenchmarkPass123!"}' | jq -r .accessToken)
 
 # 3. Create a published event with 10 tickets
-EVENT_ID=$(curl -s -X POST http://localhost:3000/api/events \
+EVENT_ID=$(curl -s -X POST "$BASE_URL/api/events" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $ORG_TOKEN" \
   -d '{
@@ -77,19 +91,19 @@ echo "Created Event ID: $EVENT_ID"
 **Commands to run**:
 ```bash
 # Customer login
-CUST_TOKEN=$(curl -s -X POST http://localhost:3000/api/auth/login \
+CUST_TOKEN=$(curl -s -X POST "$BASE_URL/api/auth/login" \
   -H "Content-Type: application/json" \
-  -d '{"email":"bench_customer_0@example.com","password":"BenchmarkPass123!"}' | jq -r .accessToken)
+  -d "{\"email\":\"$CUST_EMAIL\",\"password\":\"DemoPassword123!\"}" | jq -r .accessToken)
 
 # Book 2 tickets with Idempotency Key
-curl -i -X POST http://localhost:3000/api/events/$EVENT_ID/bookings \
+curl -i -X POST "$BASE_URL/api/events/$EVENT_ID/bookings" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $CUST_TOKEN" \
   -H "Idempotency-Key: demo-idem-key-001" \
   -d '{"quantity": 2}'
 
 # Replay exact same request (Idempotent response, no duplicate deduction)
-curl -i -X POST http://localhost:3000/api/events/$EVENT_ID/bookings \
+curl -i -X POST "$BASE_URL/api/events/$EVENT_ID/bookings" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $CUST_TOKEN" \
   -H "Idempotency-Key: demo-idem-key-001" \
@@ -99,12 +113,12 @@ curl -i -X POST http://localhost:3000/api/events/$EVENT_ID/bookings \
 **Worker Log Highlight**:
 > Point to the worker terminal displaying:
 > `[Worker] Processing job outbox_... of type booking_confirmation`
-> `[EmailService] Booking confirmation email to bench_customer_0@example.com for event "Exclusive Tech Gala 2026"`
+> `[EmailService] Booking confirmation email to delivered@resend.dev for event "Exclusive Tech Gala 2026"`
 
 **Organizer Event Update (Task B)**:
 ```bash
 # Update event venue & title -> triggers event_updated notifications to booked customers
-curl -X PATCH http://localhost:3000/api/events/$EVENT_ID \
+curl -X PATCH "$BASE_URL/api/events/$EVENT_ID" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $ORG_TOKEN" \
   -d '{"venue": "Grand Symphony Hall Room B"}'

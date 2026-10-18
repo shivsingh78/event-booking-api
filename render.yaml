@@ -2,23 +2,22 @@ services:
   # Web API Service
   - type: web
     name: event-booking-api
-    env: node
-    plan: starter
-    buildCommand: pnpm install && pnpm build && pnpm migrate
+    runtime: node
+    plan: 0.5c-512mb
+    buildCommand: pnpm install --frozen-lockfile && pnpm build
+    preDeployCommand: node dist/db/migrate.js
     startCommand: node dist/server.js
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 3000
       - key: DATABASE_URL
         fromDatabase:
           name: event-booking-db
           property: connectionString
       - key: REDIS_URL
         fromService:
-          type: redis
+          type: keyvalue
           name: event-booking-redis
           property: connectionString
       - key: JWT_SECRET
@@ -28,7 +27,7 @@ services:
       - key: RESEND_API_KEY
         sync: false
       - key: EMAIL_FROM
-        value: onboarding@resend.dev
+        sync: false
       - key: DATABASE_POOL_MAX
         value: "25"
       - key: BOOKING_RATE_LIMIT_PER_MINUTE
@@ -37,9 +36,9 @@ services:
   # Background Queue Worker
   - type: worker
     name: event-booking-worker
-    env: node
-    plan: starter
-    buildCommand: pnpm install && pnpm build
+    runtime: node
+    plan: 0.5c-512mb
+    buildCommand: pnpm install --frozen-lockfile && pnpm build
     startCommand: node dist/worker.js
     envVars:
       - key: NODE_ENV
@@ -50,16 +49,28 @@ services:
           property: connectionString
       - key: REDIS_URL
         fromService:
-          type: redis
+          type: keyvalue
           name: event-booking-redis
           property: connectionString
+      - key: JWT_SECRET
+        fromService:
+          name: event-booking-api
+          type: web
+          envVarKey: JWT_SECRET
       - key: RESEND_API_KEY
         sync: false
       - key: EMAIL_FROM
-        value: onboarding@resend.dev
+        sync: false
+
+  # Key Value / Redis Instance
+  - type: keyvalue
+    name: event-booking-redis
+    plan: free
+    # The API and worker connect over Render's private network only.
+    ipAllowList: []
 
 databases:
   - name: event-booking-db
     databaseName: event_booking
     user: event_booking_user
-    plan: starter
+    plan: 0.5c-1g
