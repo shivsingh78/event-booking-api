@@ -6,7 +6,7 @@ WORKDIR /app
 # Enable pnpm
 RUN corepack enable && corepack prepare pnpm@12.14.0 --activate
 
-COPY package.json pnpm-lock.yaml tsconfig.json ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json ./
 RUN pnpm install --frozen-lockfile
 
 COPY src ./src
@@ -22,7 +22,7 @@ ENV NODE_ENV=production
 
 RUN corepack enable && corepack prepare pnpm@12.14.0 --activate
 
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --prod --frozen-lockfile
 
 COPY --from=builder /app/dist ./dist
